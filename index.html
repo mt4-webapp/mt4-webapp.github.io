@@ -14,9 +14,10 @@
 <link rel="manifest" href="manifest.json">
 
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; min-width:0; }
+  html, body { overflow-x:hidden; max-width:100%; }
   body { background:#131313; color:#e6e6e6; font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif; display:flex; justify-content:center; }
-  .phone { width:100%; max-width:480px; min-height:100vh; background:#131313; position:relative; padding-bottom:80px; }
+  .phone { width:100%; max-width:480px; min-height:100vh; background:#131313; position:relative; padding-bottom:80px; overflow-x:hidden; }
   ::-webkit-scrollbar { width:0; }
 
   /* Status bar */
@@ -53,15 +54,18 @@
   .qrow.selected::before { content:""; position:absolute; left:0; top:0; border-left:16px solid #e2574c; border-bottom:16px solid transparent; }
   .qrow .top { display:flex; justify-content:space-between; align-items:baseline; }
   .qrow .sym { font-size:24px; font-weight:700; }
-  .qrow .prices { font-size:24px; font-weight:600; color:#5b9bff; display:flex; gap:22px; }
+  .qrow .prices { font-size:24px; font-weight:600; display:flex; gap:22px; }
+  .qrow .prices.up { color:#5b9bff; } .qrow .prices.dn { color:#e2574c; }
   .qrow .prices sup { font-size:14px; }
-  .qrow .bot { display:flex; justify-content:space-between; color:#9e9e9e; font-size:18px; margin-top:4px; }
+  .qrow .bot { display:flex; justify-content:space-between; gap:8px; color:#9e9e9e; font-size:18px; margin-top:4px; }
+  .qrow .bot span:nth-child(1), .qrow .bot span:nth-child(2) { flex-shrink:0; white-space:nowrap; }
+  .qrow .bot span:nth-child(3) { min-width:0; text-align:right; }
 
   /* ---- Trade / Historique rows ---- */
   .kv { display:flex; align-items:baseline; font-size:22px; padding:7px 24px; }
-  .kv .lbl { font-weight:700; color:#fff; white-space:nowrap; }
-  .kv .dots { flex:1; border-bottom:3px dotted #4a4a4a; margin:0 10px; transform:translateY(-5px); }
-  .kv .val { font-weight:700; }
+  .kv .lbl { font-weight:700; color:#fff; white-space:nowrap; flex-shrink:0; }
+  .kv .dots { flex:1; border-bottom:3px dotted #4a4a4a; margin:0 10px; transform:translateY(-5px); min-width:8px; }
+  .kv .val { font-weight:700; text-align:right; }
   .kv .val.neg { color:#e2574c; } .kv .val.pos { color:#5b9bff; }
   .divider { border-top:2px solid #2c2c2c; margin:8px 0 0 0; }
   .sec { color:#8f8f8f; font-size:22px; font-weight:600; padding:10px 24px; background:#161616; border-top:2px solid #2c2c2c; border-bottom:2px solid #2c2c2c; }
@@ -133,6 +137,30 @@
   .sheet input, .sheet select { width:100%; background:#1c1c1c; border:1px solid #444; border-radius:8px; color:#e6e6e6; font-size:18px; padding:12px 14px; outline:none; }
   .sheet input:focus, .sheet select:focus { border-color:#2962ff; }
   .toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px); background:#e6e6e6; color:#131313; padding:12px 24px; border-radius:24px; font-size:16px; font-weight:600; opacity:0; pointer-events:none; transition:all .3s ease; z-index:99; white-space:nowrap; }
+
+  /* ---- Connexion au compte ---- */
+  .cn-head { display:flex; align-items:center; gap:14px; padding:18px 24px 22px 24px; }
+  .cn-head .logo { margin:0; padding:8px 8px 6px 8px; flex-shrink:0; }
+  .cn-head .logo .bars { height:16px; } .cn-head .logo .bars i { width:3px; }
+  .cn-head .logo .bars i:nth-child(1){ height:6px; } .cn-head .logo .bars i:nth-child(2){ height:10px; }
+  .cn-head .logo .bars i:nth-child(3){ height:13px; } .cn-head .logo .bars i:nth-child(4){ height:16px; }
+  .cn-head .logo .ic { font-size:15px; } .cn-head .logo .name { font-size:9px; }
+  .cn-head .srv { font-size:22px; color:#8a8a8a; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cn-head .brk { font-size:18px; color:#6f6f6f; margin-top:3px; }
+  .cn-sep { border-top:2px solid #3a3a3a; margin:0 0 6px 0; }
+  .cn-row { padding:20px 24px 14px 24px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:baseline; gap:16px; }
+  .cn-row .cn-lbl { font-size:20px; font-weight:700; color:#e6e6e6; flex-shrink:0; }
+  .cn-row .cn-val { font-size:20px; color:#9e9e9e; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; }
+  .cn-check { display:flex; align-items:center; gap:16px; padding:20px 24px; cursor:pointer; }
+  .cn-check .box { width:24px; height:24px; border-radius:4px; border:2px solid #666; background:transparent; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .cn-check.checked .box { background:#2962ff; border-color:#2962ff; }
+  .cn-check .box svg { width:16px; height:16px; opacity:0; }
+  .cn-check.checked .box svg { opacity:1; }
+  .cn-check .lbl { font-size:19px; color:#9e9e9e; }
+  .cn-bottombar { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; background:#131313; border-top:1px solid #333; padding:18px; text-align:center; font-size:20px; font-weight:700; color:#e6e6e6; cursor:pointer; z-index:40; }
+  .cn-bottombar:active { opacity:.75; }
+  .backarrow { width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .backarrow svg { width:24px; height:24px; display:block; }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
   /* ---- Drawer ---- */
@@ -219,34 +247,7 @@
   </div>
 
   <!-- ====== TRADE ====== -->
-  <div class="view" id="view-trade" data-title="Trade">
-    <div style="padding:6px 24px 10px 24px;">
-      <div style="font-size:22px;color:#fff;">Trade</div>
-      <div style="font-size:22px;color:#e2574c;font-weight:600;"><span class="eb" data-b="t_pnl">-3.63 USD</span></div>
-    </div>
-    <div class="kv"><span class="lbl">Balance:</span><span class="dots"></span><span class="val eb" data-b="t_balance">2 376 766.00</span></div>
-    <div class="kv"><span class="lbl">Moyens:</span><span class="dots"></span><span class="val eb" data-b="t_moyens">2 376 762.37</span></div>
-    <div class="kv"><span class="lbl">Marge libre:</span><span class="dots"></span><span class="val eb" data-b="t_margelibre">2 376 745.41</span></div>
-    <div class="kv"><span class="lbl">Niveau de la marge (%):</span><span class="dots"></span><span class="val eb" data-b="t_niveau">14 013 929.07</span></div>
-    <div class="kv"><span class="lbl">Marge:</span><span class="dots"></span><span class="val eb" data-b="t_marge">16.96</span></div>
-    <div class="kv"><span class="lbl">Levier:</span><span class="dots"></span><span class="val eb" data-b="t_levier">1:500</span></div>
-    <div class="divider"></div>
-    <div class="sec">Positions</div>
-    <div class="trow">
-      <div><div class="l1">XAUUSD, <span class="blue">buy 0.01</span></div><div class="l2">4 354.83 → 4 378.11</div></div>
-      <div class="pnl up eb" data-b="t_p1">23.28</div>
-    </div>
-    <div class="trow">
-      <div><div class="l1">EURUSD, <span class="red">sell 0.11</span></div><div class="l2">1.14631 → 1.14864</div></div>
-      <div class="pnl dn eb" data-b="t_p2">-25.63</div>
-    </div>
-    <div class="divider"></div>
-    <div class="sec">Ordres</div>
-    <div class="trow">
-      <div><div class="l1">SOLUSD, <span class="red">sell stop</span></div><div class="l2">16.00 at 74.2682</div></div>
-      <div class="eb" style="font-size:22px;font-weight:700;color:#e6e6e6;" data-b="t_ord1">110.4420</div>
-    </div>
-  </div>
+  <div class="view" id="view-trade" data-title="Trade"></div>
 
   <!-- ====== HISTORIQUE ====== -->
   <div class="view" id="view-history" data-title="Historique">
@@ -720,12 +721,17 @@
     <div class="btn danger" id="deleteBtn">Supprimer le compte</div>
   </div>
 
+  <!-- ====== CONNEXION AU COMPTE ====== -->
+  <div class="view" id="view-connect" data-title="Connecter au compte">
+    <div id="connectContent"></div>
+  </div>
+
   <!-- ====== NAVBAR ====== -->
   <div class="navbar" id="navbar">
-    <span class="nav-item" data-tab="0"><svg viewBox="0 0 24 24" fill="none"><path d="M3 17l5-6 4 3 6-8 3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-    <span class="nav-item" data-tab="1"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="3.4" height="8" rx="1" fill="currentColor"/><rect x="10.3" y="5" width="3.4" height="13" rx="1" fill="currentColor"/><rect x="16.6" y="8" width="3.4" height="10" rx="1" fill="currentColor"/></svg></span>
-    <span class="nav-item" data-tab="2"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8h13M13 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16H7M11 12l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-    <span class="nav-item" data-tab="3"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="7.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 9v4.2l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 2.5h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+    <span class="nav-item" data-tab="0"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8h13M13 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16H7M11 12l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <span class="nav-item" data-tab="1"><svg viewBox="0 0 24 24" fill="none"><rect x="4.3" y="9" width="4" height="10" rx="2" fill="currentColor"/><rect x="10.3" y="4" width="4" height="15" rx="2" fill="currentColor"/><rect x="16.3" y="7" width="4" height="12" rx="2" fill="currentColor"/></svg></span>
+    <span class="nav-item" data-tab="2"><svg viewBox="0 0 24 24" fill="none"><path d="M3.5 18.5L18 4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M11 4h7v7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="3.5" cy="18.5" r="1.6" fill="currentColor"/></svg></span>
+    <span class="nav-item" data-tab="3"><svg viewBox="0 0 24 24" fill="none"><path d="M3.5 10.5L6 4.5h12l2.5 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 10.5h5.2a1 1 0 0 1 .95.68L10.3 14h3.4l.65-2.82a1 1 0 0 1 .95-.68h5.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 10.5V18a1 1 0 0 0 1 1h15a1 1 0 0 0 1-1v-7.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     <span class="nav-item" data-tab="4"><svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4.5" width="14" height="16" rx="1.4" stroke="currentColor" stroke-width="1.7"/><path d="M6.5 8.5h8M6.5 12h8M6.5 15.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M17.5 8v10a2 2 0 0 1-2 2h-9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
     <span class="nav-item" data-tab="5"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5h16v10.5a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></span>
   </div>
@@ -773,16 +779,32 @@
 <script>
 // ================= DATA =================
 const quotes = [
-  { sym:"USDCHF", time:"23:56:58", spread:18, low:"0.82161", high:"0.82600", bid:"0.8220", bS:"0", ask:"0.8221", aS:"8" },
-  { sym:"USDJPY", time:"23:56:51", spread:20, low:"155.875", high:"158.055", bid:"156.86", bS:"9", ask:"156.88", aS:"9" },
-  { sym:"AUDUSD", time:"23:56:59", spread:20, low:"0.70985", high:"0.71363", bid:"0.7124", bS:"6", ask:"0.7126", aS:"6" },
-  { sym:"EURUSD", time:"23:56:59", spread:10, low:"1.14549", high:"1.14918", bid:"1.1485", bS:"4", ask:"1.1486", aS:"4", sel:true },
-  { sym:"GBPUSD", time:"23:56:50", spread:23, low:"1.33355", high:"1.33983", bid:"1.3392", bS:"9", ask:"1.3395", aS:"2" },
-  { sym:"USDCAD", time:"23:56:55", spread:25, low:"1.39762", high:"1.40145", bid:"1.3983", bS:"3", ask:"1.3985", aS:"8" },
-  { sym:"AUDCAD", time:"23:56:59", spread:46, low:"0.99417", high:"0.99833", bid:"0.9962", bS:"0", ask:"0.9966", aS:"6" },
-  { sym:"AUDCHF", time:"23:56:59", spread:30, low:"0.58504", high:"0.58826", bid:"0.5856", bS:"4", ask:"0.5859", aS:"4" },
-  { sym:"AUDJPY", time:"23:56:59", spread:47, low:"110.820", high:"112.618", bid:"111.75", bS:"9", ask:"111.80", aS:"6" },
+  { sym:"USDCHF", time:"23:56:58", spread:18, low:"0.82161", high:"0.82600", bid:"0.8220", bS:"0", ask:"0.8221", aS:"8", dir:"up" },
+  { sym:"USDJPY", time:"23:56:51", spread:20, low:"155.875", high:"158.055", bid:"156.86", bS:"9", ask:"156.88", aS:"9", dir:"up" },
+  { sym:"AUDUSD", time:"23:56:59", spread:20, low:"0.70985", high:"0.71363", bid:"0.7124", bS:"6", ask:"0.7126", aS:"6", dir:"dn" },
+  { sym:"EURUSD", time:"23:56:59", spread:10, low:"1.14549", high:"1.14918", bid:"1.1485", bS:"4", ask:"1.1486", aS:"4", sel:true, dir:"up" },
+  { sym:"GBPUSD", time:"23:56:50", spread:23, low:"1.33355", high:"1.33983", bid:"1.3392", bS:"9", ask:"1.3395", aS:"2", dir:"dn" },
+  { sym:"USDCAD", time:"23:56:55", spread:25, low:"1.39762", high:"1.40145", bid:"1.3983", bS:"3", ask:"1.3985", aS:"8", dir:"up" },
+  { sym:"AUDCAD", time:"23:56:59", spread:46, low:"0.99417", high:"0.99833", bid:"0.9962", bS:"0", ask:"0.9966", aS:"6", dir:"dn" },
+  { sym:"AUDCHF", time:"23:56:59", spread:30, low:"0.58504", high:"0.58826", bid:"0.5856", bS:"4", ask:"0.5859", aS:"4", dir:"up" },
+  { sym:"AUDJPY", time:"23:56:59", spread:47, low:"110.820", high:"112.618", bid:"111.75", bS:"9", ask:"111.80", aS:"6", dir:"dn" },
 ];
+
+const tradeData = {
+  balance: "2 376 766.00",
+  moyens: "2 376 762.37",
+  margelibre: "2 376 745.41",
+  niveau: "14 013 929.07",
+  marge: "16.96",
+  levier: "1:500",
+  positions: [
+    { sym:"XAUUSD", side:"buy 0.01", cls:"blue", range:"4 354.83 → 4 378.11", pnl:23.28 },
+    { sym:"EURUSD", side:"sell 0.11", cls:"red", range:"1.14631 → 1.14864", pnl:-25.63 },
+  ],
+  orders: [
+    { sym:"SOLUSD", side:"sell stop", detail:"16.00 at 74.2682", price:"110.4420" },
+  ],
+};
 
 const DEFAULT_ACCOUNTS = [
   { id:1, demo:false, name:"Picard Irgina maima", server:"ICMarketsSC-Live19", login:"1900077260", ap:"NY DC 2", balance:"2.376.766" },
@@ -823,7 +845,7 @@ function renderQuotes() {
   $('#view-quotes').innerHTML = quotes.map(q => `
     <div class="qrow ${q.sel?'selected':''}" data-sym="${q.sym}">
       <div class="top"><span class="sym">${q.sym}</span>
-        <span class="prices"><span>${price(q.bid,q.bS)}</span><span>${price(q.ask,q.aS)}</span></span></div>
+        <span class="prices ${q.dir}"><span>${price(q.bid,q.bS)}</span><span>${price(q.ask,q.aS)}</span></span></div>
       <div class="bot"><span>${q.time}</span><span>Spread: ${q.spread}</span><span>Low: ${q.low}&nbsp;&nbsp;High: ${q.high}</span></div>
     </div>`).join('');
   $$('#view-quotes .qrow').forEach(r => r.onclick = () => {
@@ -831,6 +853,36 @@ function renderQuotes() {
     renderQuotes(); toast(r.dataset.sym + ' → Graphique');
     setTimeout(() => switchTab('chart'), 350);
   });
+}
+
+// ================= TRADE =================
+function tradeTotal() { return tradeData.positions.reduce((sum, p) => sum + p.pnl, 0); }
+function renderTrade() {
+  const hasPositions = tradeData.positions.length > 0;
+  let html = `
+    <div class="kv" style="padding-top:16px;"><span class="lbl">Balance:</span><span class="dots"></span><span class="val eb" data-b="t_balance">${tradeData.balance}</span></div>
+    <div class="kv"><span class="lbl">Moyens:</span><span class="dots"></span><span class="val eb" data-b="t_moyens">${tradeData.moyens}</span></div>
+    <div class="kv"><span class="lbl">Marge libre:</span><span class="dots"></span><span class="val eb" data-b="t_margelibre">${tradeData.margelibre}</span></div>`;
+  if (hasPositions) {
+    html += `
+    <div class="kv"><span class="lbl">Niveau de la marge (%):</span><span class="dots"></span><span class="val eb" data-b="t_niveau">${tradeData.niveau}</span></div>
+    <div class="kv"><span class="lbl">Marge:</span><span class="dots"></span><span class="val eb" data-b="t_marge">${tradeData.marge}</span></div>
+    <div class="kv"><span class="lbl">Levier:</span><span class="dots"></span><span class="val eb" data-b="t_levier">${tradeData.levier}</span></div>
+    <div class="divider"></div>
+    <div class="sec">Positions</div>` + tradeData.positions.map((p, i) => `
+    <div class="trow">
+      <div><div class="l1">${p.sym}, <span class="${p.cls}">${p.side}</span></div><div class="l2">${p.range}</div></div>
+      <div class="pnl ${p.pnl >= 0 ? 'up' : 'dn'} eb" data-b="t_p${i + 1}">${p.pnl.toFixed(2)}</div>
+    </div>`).join('');
+  }
+  if (tradeData.orders.length) {
+    html += `<div class="divider"></div><div class="sec">Ordres</div>` + tradeData.orders.map((o, i) => `
+    <div class="trow">
+      <div><div class="l1">${o.sym}, <span class="red">${o.side}</span></div><div class="l2">${o.detail}</div></div>
+      <div class="eb" style="font-size:22px;font-weight:700;color:#e6e6e6;" data-b="t_ord${i + 1}">${o.price}</div>
+    </div>`).join('');
+  }
+  $('#view-trade').innerHTML = html;
 }
 
 // ================= COMPTES =================
@@ -870,7 +922,7 @@ function renderAccounts() {
 
 // ================= NAVIGATION =================
 const TABS = { quotes:0, chart:1, trade:2, history:3, news:4, messages:5 };
-const TITLES = { quotes:'Cotations', chart:'Graphique', trade:'Trade', history:'Historique', news:'Nouvelles', messages:'Messages', accounts:'Comptes', detail:'Compte' };
+const TITLES = { quotes:'Cotations', chart:'Graphique', trade:'Trade', history:'Historique', news:'Nouvelles', messages:'Messages', accounts:'Comptes', detail:'Compte', connect:'Connecter au compte' };
 const ICON = {
   shield: `<svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" stroke="#cfcfcf" stroke-width="1.7" stroke-linejoin="round"/></svg>`,
   pencil: `<svg viewBox="0 0 24 24" fill="none"><path d="M4 20l1-4.2L15.5 5.3a1.5 1.5 0 0 1 2.1 0l1.1 1.1a1.5 1.5 0 0 1 0 2.1L8.2 19l-4.2 1z" stroke="#cfcfcf" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
@@ -881,12 +933,13 @@ const ICON = {
 };
 const HICONS = {
   quotes: `<span class="hicon" data-act="ajouter symbole">＋</span><span class="hicon" data-act="modifier liste">${ICON.pencil}</span>`,
-  trade: `<span class="hicon" data-act="trier">⇅</span><span class="hicon" data-act="nouvel ordre">▣</span>`,
+  trade: `<span class="hicon" data-act="trier">⇅</span><span class="hicon" data-act="nouvel ordre"><svg viewBox="0 0 24 24" fill="none"><path d="M6 3.5h9l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" stroke="#cfcfcf" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 3.5V8h4" stroke="#cfcfcf" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 15.5h6M12 12.5v6" stroke="#cfcfcf" stroke-width="1.8" stroke-linecap="round"/></svg></span>`,
   history: `<span class="hicon" data-act="rapport">$</span><span class="hicon" data-act="trier">⇅</span><span class="hicon" data-act="calendrier">${ICON.calendar}</span>`,
   news: `<span class="hicon" data-act="catégories">${ICON.folder}</span><span class="hicon" data-act="corbeille">${ICON.trash}</span>`,
   messages: `<span class="badge">MQID</span><span class="hicon" data-act="rechercher">${ICON.search}</span>`,
   accounts: `<span class="hicon" id="shield">${ICON.shield}</span><span class="hicon" id="addBtn">＋</span><span class="hicon" data-act="menu">⋮</span>`,
   detail: ``,
+  connect: ``,
   chart: ``,
 };
 
@@ -894,10 +947,29 @@ let currentView = null;
 function switchTab(name) {
   $$('.view').forEach(v => v.classList.remove('active'));
   $('#view-'+name).classList.add('active');
-  $('#title').innerHTML = TITLES[name] + (name==='history' ? '<small>Tous les symboles</small>' : '');
+  let sub = '';
+  if (name === 'history') sub = '<small>Tous les symboles</small>';
+  if (name === 'trade') {
+    const total = tradeTotal();
+    const color = total >= 0 ? '#5b9bff' : '#e2574c';
+    sub = `<small style="display:block;font-size:16px;font-weight:600;color:${color};margin-top:2px;">${total.toFixed(2)} USD</small>`;
+  }
+  if (name === 'connect') sub = '<small style="display:block;font-size:16px;color:#9e9e9e;margin-top:2px;">Autorisation</small>';
+  $('#title').innerHTML = TITLES[name] + sub;
   $('#hicons').innerHTML = HICONS[name] || '';
   $$('.nav-item').forEach(n => n.classList.toggle('active', +n.dataset.tab === TABS[name]));
-  $('#burger').style.display = (name==='detail') ? 'none' : 'flex';
+  const burger = $('#burger');
+  if (name === 'connect') {
+    burger.innerHTML = `<svg viewBox="0 0 24 24" fill="none" style="width:24px;height:24px;"><path d="M15 4L7 12l8 8" stroke="#e6e6e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    burger.style.display = 'flex';
+    burger.onclick = () => switchTab('detail');
+  } else {
+    burger.innerHTML = '<span></span><span></span><span></span>';
+    burger.style.display = (name==='detail') ? 'none' : 'flex';
+    burger.onclick = () => $('#drawer').classList.add('show');
+  }
+  $('#navbar').style.display = (name === 'connect') ? 'none' : 'flex';
+  $('.phone').style.paddingBottom = (name === 'connect') ? '90px' : '';
   bindHicons();
   currentView = name;
   if (location.hash !== '#'+name) history.replaceState(null,'','#'+name);
@@ -917,7 +989,30 @@ function openDetail(id) {
   $('#detailContent').innerHTML = cardHTML(a);
   switchTab('detail');
 }
-$('#connectBtn').onclick = () => { toast('Connexion au compte ' + currentId + '…'); setTimeout(()=>switchTab('trade'), 700); };
+
+// ================= CONNEXION AU COMPTE =================
+function renderConnect() {
+  const a = accounts.find(x => x.id === currentId);
+  $('#connectContent').innerHTML = `
+    <div class="cn-head">
+      ${logoHTML}
+      <div>
+        <div class="srv">${a.server}</div>
+        <div class="brk">Raw Trading Ltd</div>
+      </div>
+    </div>
+    <div class="cn-sep"></div>
+    <div class="cn-row"><span class="cn-lbl">Login</span><span class="cn-val">${a.login}</span></div>
+    <div class="cn-row"><span class="cn-lbl">Mot de passe</span><span class="cn-val">••••••••</span></div>
+    <div class="cn-check checked" id="savePassCheck">
+      <span class="box"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span class="lbl">Sauvegarder le mot de passe</span>
+    </div>
+    <div class="cn-bottombar" id="doConnect">SE CONNECTER</div>`;
+  $('#savePassCheck').onclick = () => $('#savePassCheck').classList.toggle('checked');
+  $('#doConnect').onclick = () => { toast('Connexion au compte ' + a.login + '…'); setTimeout(() => switchTab('trade'), 700); };
+}
+$('#connectBtn').onclick = () => { renderConnect(); switchTab('connect'); };
 $('#renameBtn').onclick = () => {
   const a = accounts.find(x=>x.id===currentId);
   const n = prompt('Nouveau nom du compte :', a.name);
@@ -934,7 +1029,6 @@ $('#deleteBtn').onclick = () => {
 $$('.nav-item').forEach(n => n.onclick = () => switchTab(Object.keys(TABS)[+n.dataset.tab]));
 
 // ================= DRAWER =================
-$('#burger').onclick = () => $('#drawer').classList.add('show');
 $('#drawer').onclick = e => { if (e.target.id==='drawer') $('#drawer').classList.remove('show'); };
 $('#manageAcc').onclick = () => { $('#drawer').classList.remove('show'); switchTab('accounts'); };
 $$('.ditem').forEach(d => d.onclick = () => {
@@ -966,7 +1060,7 @@ $('#ctMenu').onclick = () => $('#drawer').classList.add('show');
 $$('.chart-toolbar [data-act]').forEach(el => el.onclick = () => toast(el.dataset.act));
 
 // ================= INIT =================
-renderQuotes(); renderAccounts(); applyBalances();
+renderQuotes(); renderTrade(); renderAccounts(); applyBalances();
 if (!localStorage.getItem('mt4_hint')) { setTimeout(()=>toast('💡 Touchez n\'importe quel montant pour le modifier'), 1200); localStorage.setItem('mt4_hint','1'); }
 const start = (location.hash || '#quotes').slice(1);
 switchTab(['quotes','chart','trade','history','news','messages','accounts','detail'].includes(start) ? start : 'quotes');
