@@ -23,18 +23,6 @@
   }
   ::-webkit-scrollbar { width:0; }
 
-  /* Status bar */
-  .statusbar { display:flex; justify-content:space-between; align-items:center; padding:14px 24px 6px 24px; font-size:15px; font-weight:600; position:sticky; top:0; background:#131313; z-index:30; }
-  .statusbar .icons { display:flex; align-items:center; gap:7px; font-size:13px; }
-  .signal { display:inline-flex; align-items:flex-end; gap:2px; height:11px; }
-  .signal i { display:block; width:3px; background:#e6e6e6; border-radius:1px; }
-  .signal i:nth-child(1){ height:4px; } .signal i:nth-child(2){ height:6px; }
-  .signal i:nth-child(3){ height:8.5px; } .signal i:nth-child(4){ height:11px; }
-  .wifi { width:15px; height:11px; display:block; }
-  .battery { width:26px; height:13px; border:1px solid #888; border-radius:4px; display:inline-flex; align-items:center; padding:1px; position:relative; }
-  .battery::after { content:""; position:absolute; right:-4px; top:3px; width:2px; height:5px; background:#888; border-radius:0 2px 2px 0; }
-  .battery i { display:block; height:100%; width:55%; background:#e6e6e6; border-radius:2px; }
-
   /* Header */
   .header { display:flex; align-items:center; gap:18px; padding:14px 24px 18px 24px; }
   .burger { width:26px; display:flex; flex-direction:column; gap:5px; cursor:pointer; }
@@ -201,15 +189,6 @@
 </head>
 <body>
 <div class="phone">
-
-  <div class="statusbar">
-    <span id="clock">09:50</span>
-    <span class="icons">
-      <span class="signal"><i></i><i></i><i></i><i></i></span>
-      <svg class="wifi" viewBox="0 0 16 12" fill="none"><path d="M1 4.5C4.8 1 11.2 1 15 4.5" stroke="#e6e6e6" stroke-width="1.4" stroke-linecap="round"/><path d="M3.3 7.2C6 4.8 10 4.8 12.7 7.2" stroke="#e6e6e6" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="10.3" r="1.3" fill="#e6e6e6"/></svg>
-      <span class="battery"><i></i></span> <b>80</b>
-    </span>
-  </div>
 
   <div class="header">
     <div class="burger" id="burger"><span></span><span></span><span></span></div>
@@ -1055,8 +1034,6 @@ $('#saveBtn').onclick = () => {
 // ================= MISC =================
 let t;
 function toast(msg) { const el = $('#toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(t); t = setTimeout(()=>el.classList.remove('show'), 2000); }
-function tick() { const d = new Date(); $('#clock').textContent = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
-tick(); setInterval(tick, 30000);
 
 // Chart toolbar
 $('#ctMenu').onclick = () => $('#drawer').classList.add('show');
