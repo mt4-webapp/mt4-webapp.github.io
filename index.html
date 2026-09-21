@@ -117,7 +117,6 @@
   .btn { display:block; margin:14px 18px; padding:16px; text-align:center; border-radius:10px; font-size:20px; font-weight:600; cursor:pointer; transition:opacity .12s; }
   .btn:active { opacity:.75; }
   .btn.primary { background:#2962ff; color:#fff; }
-  .btn.danger { background:#8e2b2b; color:#fff; }
   .btn.outline { border:2px solid #888; color:#e6e6e6; }
   .overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:flex-end; justify-content:center; z-index:50; }
   .overlay.show { display:flex; }
@@ -695,14 +694,6 @@
     <div id="demoCards"></div>
   </div>
 
-  <!-- ====== DÉTAIL COMPTE ====== -->
-  <div class="view" id="view-detail" data-title="Compte">
-    <div id="detailContent"></div>
-    <div class="btn primary" id="connectBtn">Se connecter</div>
-    <div class="btn outline" id="renameBtn">Renommer le compte</div>
-    <div class="btn danger" id="deleteBtn">Supprimer le compte</div>
-  </div>
-
   <!-- ====== CONNEXION AU COMPTE ====== -->
   <div class="view" id="view-connect" data-title="Connecter au compte">
     <div id="connectContent"></div>
@@ -899,12 +890,12 @@ function cardHTML(a) {
 function renderAccounts() {
   $('#cards').innerHTML = accounts.filter(a=>!a.demo).map(cardHTML).join('');
   $('#demoCards').innerHTML = accounts.filter(a=>a.demo).map(cardHTML).join('');
-  $$('.card').forEach(c => c.onclick = () => openDetail(+c.dataset.id));
+  $$('.card').forEach(c => c.onclick = () => openConnect(+c.dataset.id));
 }
 
 // ================= NAVIGATION =================
 const TABS = { quotes:0, chart:1, trade:2, history:3, news:4, messages:5 };
-const TITLES = { quotes:'Cotations', chart:'Graphique', trade:'Trade', history:'Historique', news:'Nouvelles', messages:'Messages', accounts:'Comptes', detail:'Compte', connect:'Connecter au compte' };
+const TITLES = { quotes:'Cotations', chart:'Graphique', trade:'Trade', history:'Historique', news:'Nouvelles', messages:'Messages', accounts:'Comptes', connect:'Connecter au compte' };
 const ICON = {
   shield: `<svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" stroke="#cfcfcf" stroke-width="1.7" stroke-linejoin="round"/></svg>`,
   pencil: `<svg viewBox="0 0 24 24" fill="none"><path d="M4 20l1-4.2L15.5 5.3a1.5 1.5 0 0 1 2.1 0l1.1 1.1a1.5 1.5 0 0 1 0 2.1L8.2 19l-4.2 1z" stroke="#cfcfcf" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
@@ -920,7 +911,6 @@ const HICONS = {
   news: `<span class="hicon" data-act="catégories">${ICON.folder}</span><span class="hicon" data-act="corbeille">${ICON.trash}</span>`,
   messages: `<span class="badge">MQID</span><span class="hicon" data-act="rechercher">${ICON.search}</span>`,
   accounts: `<span class="hicon" id="shield">${ICON.shield}</span><span class="hicon" id="addBtn">＋</span><span class="hicon" data-act="menu">⋮</span>`,
-  detail: ``,
   connect: ``,
   chart: ``,
 };
@@ -944,10 +934,10 @@ function switchTab(name) {
   if (name === 'connect') {
     burger.innerHTML = `<svg viewBox="0 0 24 24" fill="none" style="width:24px;height:24px;"><path d="M15 4L7 12l8 8" stroke="#e6e6e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     burger.style.display = 'flex';
-    burger.onclick = () => switchTab('detail');
+    burger.onclick = () => switchTab('accounts');
   } else {
     burger.innerHTML = '<span></span><span></span><span></span>';
-    burger.style.display = (name==='detail') ? 'none' : 'flex';
+    burger.style.display = 'flex';
     burger.onclick = () => $('#drawer').classList.add('show');
   }
   $('#navbar').style.display = (name === 'connect') ? 'none' : 'flex';
@@ -963,16 +953,13 @@ function bindHicons() {
   $$('#hicons [data-act]').forEach(el => el.onclick = () => toast(el.dataset.act));
 }
 
-// ================= DETAIL COMPTE =================
-let currentId = null;
-function openDetail(id) {
-  currentId = id;
-  const a = accounts.find(x=>x.id===id);
-  $('#detailContent').innerHTML = cardHTML(a);
-  switchTab('detail');
-}
-
 // ================= CONNEXION AU COMPTE =================
+let currentId = null;
+function openConnect(id) {
+  currentId = id;
+  renderConnect();
+  switchTab('connect');
+}
 function renderConnect() {
   const a = accounts.find(x => x.id === currentId);
   $('#connectContent').innerHTML = `
@@ -994,18 +981,6 @@ function renderConnect() {
   $('#savePassCheck').onclick = () => $('#savePassCheck').classList.toggle('checked');
   $('#doConnect').onclick = () => { toast('Connexion au compte ' + a.login + '…'); setTimeout(() => switchTab('trade'), 700); };
 }
-$('#connectBtn').onclick = () => { renderConnect(); switchTab('connect'); };
-$('#renameBtn').onclick = () => {
-  const a = accounts.find(x=>x.id===currentId);
-  const n = prompt('Nouveau nom du compte :', a.name);
-  if (n && n.trim()) { a.name = n.trim(); saveAccounts(); renderAccounts(); toast('Compte renommé'); }
-};
-$('#deleteBtn').onclick = () => {
-  if (confirm('Supprimer ce compte de la liste ?')) {
-    accounts = accounts.filter(x=>x.id!==currentId); saveAccounts();
-    renderAccounts(); switchTab('accounts'); toast('Compte supprimé');
-  }
-};
 
 // ================= BOTTOM NAV =================
 $$('.nav-item').forEach(n => n.onclick = () => switchTab(Object.keys(TABS)[+n.dataset.tab]));
@@ -1043,7 +1018,7 @@ $$('.chart-toolbar [data-act]').forEach(el => el.onclick = () => toast(el.datase
 renderQuotes(); renderTrade(); renderAccounts(); applyBalances();
 if (!localStorage.getItem('mt4_hint')) { setTimeout(()=>toast('💡 Touchez n\'importe quel montant pour le modifier'), 1200); localStorage.setItem('mt4_hint','1'); }
 const start = (location.hash || '#quotes').slice(1);
-switchTab(['quotes','chart','trade','history','news','messages','accounts','detail'].includes(start) ? start : 'quotes');
+switchTab(['quotes','chart','trade','history','news','messages','accounts'].includes(start) ? start : 'quotes');
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
