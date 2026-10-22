@@ -212,7 +212,8 @@
       <span class="ti" data-act="nouvel ordre">▣</span>
     </div>
     <div class="chart-area">
-      <div style="text-align:center;color:#e6e6e6;">
+      <canvas id="chartCanvas" style="position:absolute;inset:0;width:100%;height:100%;display:none;"></canvas>
+      <div id="chartEmpty" style="text-align:center;color:#e6e6e6;">
         <div class="candles">
           <svg width="160" height="150" viewBox="0 0 160 150">
             <g fill="#e6e6e6">
@@ -774,8 +775,8 @@ const tradeData = {
   marge: "16.96",
   levier: "1:500",
   positions: [
-    { sym:"XAUUSD", side:"buy 0.01", cls:"blue", range:"4 354.83 → 4 378.11", pnl:23.28 },
-    { sym:"EURUSD", side:"sell 0.11", cls:"red", range:"1.14631 → 1.14864", pnl:-25.63 },
+    { sym:"XAUUSD", side:"buy 0.01", cls:"blue", range:"4 354.83 → 4 378.11", pnl:23.28, open:4354.83, size:1, digits:2, buy:true },
+    { sym:"EURUSD", side:"sell 0.11", cls:"red", range:"1.14631 → 1.14864", pnl:-25.63, open:1.14631, size:11000, digits:5, buy:false },
   ],
   orders: [
     { sym:"SOLUSD", side:"sell stop", detail:"16.00 at 74.2682", price:"110.4420" },
@@ -836,7 +837,7 @@ function splitPrice(v, digits) { const s = v.toFixed(digits); return [s.slice(0,
 function tickQuote(q) {
   const digits = q.bid.split('.')[1].length + 1, pt = Math.pow(10, -digits);
   let bid = parseFloat(q.bid + q.bS);
-  const step = (1 + Math.floor(Math.random() * 4)) * pt * (Math.random() < 0.5 ? -1 : 1);
+  const step = (1 + Math.floor(Math.random() * 4)) * (q.vol || 1) * pt * (Math.random() < 0.5 ? -1 : 1);
   q.dir = step > 0 ? 'up' : 'dn';
   bid += step;
   const ask = bid + q.spread * pt;
@@ -846,6 +847,7 @@ function tickQuote(q) {
   if (bid < lo) q.low = bid.toFixed(dec);
   if (bid > hi) q.high = bid.toFixed(dec);
   q.time = new Date().toTimeString().slice(0, 8);
+  onTick(q, bid, ask);
   const row = $('#view-quotes .qrow[data-sym="' + q.sym + '"]');
   if (!row) return;
   const p = row.querySelector('.prices');
@@ -856,10 +858,134 @@ function tickQuote(q) {
   b[0].textContent = q.time;
   b[2].innerHTML = 'Low: ' + q.low + '&nbsp;&nbsp;High: ' + q.high;
 }
-quotes.forEach(q => (function loop() {
-  tickQuote(q);
-  setTimeout(loop, 400 + Math.random() * 1800);
+// XAUUSD n'est pas dans Cotations mais alimente la position Trade
+const goldQuote = { sym:"XAUUSD", time:"", spread:30, low:"4340.00", high:"4400.00", bid:"4378.1", bS:"1", ask:"4378.4", aS:"1", dir:"up", vol:8 };
+
+// Marché fermé : du vendredi 22:00 UTC au dimanche 22:00 UTC, prix et heure figés
+function marketOpen() {
+  const d = new Date(), day = d.getUTCDay(), h = d.getUTCHours();
+  return !(day === 6 || (day === 5 && h >= 22) || (day === 0 && h < 22));
+}
+quotes.concat(goldQuote).forEach(q => (function loop() {
+  setTimeout(() => {
+    if (marketOpen()) tickQuote(q);
+    loop();
+  }, 400 + Math.random() * 1800);
 })());
+
+// ---- Trade : P&L, équité et marge en direct ----
+const BASE_BALANCE = 2376766, EQUITY_OFFSET = -1.28;
+function fmtNum(v, d) {
+  const [i, f] = Math.abs(v).toFixed(d).split('.');
+  return (v < 0 ? '-' : '') + i.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (f ? '.' + f : '');
+}
+function livePrice(p) {
+  const q = p.sym === 'XAUUSD' ? goldQuote : quotes.find(x => x.sym === p.sym);
+  return parseFloat((p.buy ? q.bid + q.bS : q.ask + q.aS));
+}
+function setEb(key, text) {
+  if (state[key] !== undefined) return;
+  const el = document.querySelector('[data-b="' + key + '"]');
+  if (el) el.textContent = text;
+}
+function updateTrade() {
+  tradeData.positions.forEach((p, i) => {
+    const cur = livePrice(p);
+    p.pnl = (p.buy ? cur - p.open : p.open - cur) * p.size;
+    p.range = fmtNum(p.open, p.digits) + ' → ' + fmtNum(cur, p.digits);
+    const row = $('#view-trade').querySelectorAll('.trow')[i];
+    if (!row) return;
+    row.querySelector('.l2').textContent = p.range;
+    const el = row.querySelector('.pnl');
+    el.className = 'pnl ' + (p.pnl >= 0 ? 'up' : 'dn') + ' eb';
+    if (state['t_p' + (i + 1)] === undefined) el.textContent = p.pnl.toFixed(2);
+  });
+  const margin = parseFloat(tradeData.marge);
+  const equity = BASE_BALANCE + tradeTotal() + EQUITY_OFFSET;
+  tradeData.moyens = fmtNum(equity, 2);
+  tradeData.margelibre = fmtNum(equity - margin, 2);
+  tradeData.niveau = fmtNum(equity / margin * 100, 2);
+  setEb('t_moyens', tradeData.moyens);
+  setEb('t_margelibre', tradeData.margelibre);
+  setEb('t_niveau', tradeData.niveau);
+  if (currentView === 'trade') {
+    const total = tradeTotal(), sm = $('#title small');
+    if (sm) { sm.textContent = total.toFixed(2) + ' USD'; sm.style.color = total >= 0 ? '#5b9bff' : '#e2574c'; }
+  }
+}
+
+// ---- Graphique : bougies M1 vivantes pour le symbole sélectionné ----
+const charts = {};
+const CHART_N = 50;
+function randn() { return (Math.random() + Math.random() + Math.random() - 1.5) * 1.6; }
+function getChart(q) {
+  if (charts[q.sym]) return charts[q.sym];
+  const digits = q.bid.split('.')[1].length + 1;
+  let c = parseFloat(q.bid + q.bS);
+  const vol = c * 0.00035, list = [];
+  const minute = Math.floor(Date.now() / 60000);
+  for (let i = 0; i < 120; i++) {
+    const o = c + randn() * vol;
+    const hi = Math.max(o, c) + Math.random() * vol * 0.6;
+    const lo = Math.min(o, c) - Math.random() * vol * 0.6;
+    list.unshift({ o, h: hi, l: lo, c, m: minute - i });
+    c = o;
+  }
+  return (charts[q.sym] = { list, digits });
+}
+function feedChart(q, bid) {
+  const ch = charts[q.sym];
+  if (!ch) return;
+  const minute = Math.floor(Date.now() / 60000), last = ch.list[ch.list.length - 1];
+  if (last.m !== minute) { ch.list.push({ o: last.c, h: bid, l: bid, c: bid, m: minute }); ch.list.shift(); }
+  else { last.c = bid; last.h = Math.max(last.h, bid); last.l = Math.min(last.l, bid); }
+}
+function drawChart() {
+  const cv = $('#chartCanvas'), empty = $('#chartEmpty');
+  const q = quotes.find(x => x.sel);
+  if (!q) { cv.style.display = 'none'; empty.style.display = ''; return; }
+  empty.style.display = 'none'; cv.style.display = 'block';
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (!W || !H) return;
+  const dpr = window.devicePixelRatio || 1;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  const ch = getChart(q), data = ch.list.slice(-CHART_N);
+  feedChart(q, parseFloat(q.bid + q.bS));
+  let mn = Infinity, mx = -Infinity;
+  data.forEach(k => { mn = Math.min(mn, k.l); mx = Math.max(mx, k.h); });
+  const pad = (mx - mn) * 0.08; mn -= pad; mx += pad;
+  const AX = 62, plotW = W - AX, y = v => H - 8 - (v - mn) / (mx - mn) * (H - 16);
+  g.font = '12px sans-serif'; g.textBaseline = 'middle';
+  g.strokeStyle = '#262626'; g.fillStyle = '#8a8a8a'; g.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const v = mn + (mx - mn) * i / 5, yy = Math.round(y(v)) + 0.5;
+    g.beginPath(); g.moveTo(0, yy); g.lineTo(plotW, yy); g.stroke();
+    g.textAlign = 'left'; g.fillText(v.toFixed(ch.digits), plotW + 6, yy);
+  }
+  const cw = plotW / CHART_N;
+  data.forEach((k, i) => {
+    const x = i * cw + cw / 2, up = k.c >= k.o;
+    g.strokeStyle = g.fillStyle = up ? '#5b9bff' : '#e2574c';
+    g.beginPath(); g.moveTo(Math.round(x) + 0.5, y(k.h)); g.lineTo(Math.round(x) + 0.5, y(k.l)); g.stroke();
+    const top = y(Math.max(k.o, k.c)), bh = Math.max(1, Math.abs(y(k.o) - y(k.c)));
+    g.fillRect(x - cw * 0.3, top, cw * 0.6, bh);
+  });
+  const bid = parseFloat(q.bid + q.bS), by = y(bid);
+  g.strokeStyle = '#e2574c'; g.setLineDash([4, 4]);
+  g.beginPath(); g.moveTo(0, by); g.lineTo(plotW, by); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#e2574c'; g.fillRect(plotW, by - 10, AX, 20);
+  g.fillStyle = '#fff'; g.textAlign = 'left'; g.fillText(bid.toFixed(ch.digits), plotW + 4, by);
+}
+window.addEventListener('resize', () => { if (currentView === 'chart') drawChart(); });
+
+function onTick(q, bid, ask) {
+  if (q.sym === 'XAUUSD' || q.sym === 'EURUSD') updateTrade();
+  if (currentView === 'chart' && q.sel) drawChart();
+  else if (charts[q.sym]) feedChart(q, bid);
+}
 
 // ================= TRADE =================
 function tradeTotal() { return tradeData.positions.reduce((sum, p) => sum + p.pnl, 0); }
@@ -954,7 +1080,9 @@ function switchTab(name) {
   $('#view-'+name).classList.add('active');
   let sub = '';
   if (name === 'history') sub = '<small>Tous les symboles</small>';
+  if (name === 'chart') { const sq = quotes.find(x => x.sel); if (sq) sub = '<small>' + sq.sym + ', M1</small>'; }
   if (name === 'trade') {
+    updateTrade();
     const total = tradeTotal();
     const color = total >= 0 ? '#5b9bff' : '#e2574c';
     sub = `<small style="display:block;font-size:16px;font-weight:600;color:${color};margin-top:2px;">${total.toFixed(2)} USD</small>`;
@@ -979,6 +1107,7 @@ function switchTab(name) {
   currentView = name;
   if (location.hash !== '#'+name) history.replaceState(null,'','#'+name);
   applyBalances();
+  if (name === 'chart') drawChart();
   window.scrollTo(0,0);
 }
 function bindHicons() {
