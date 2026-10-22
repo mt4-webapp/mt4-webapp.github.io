@@ -831,6 +831,36 @@ function renderQuotes() {
   });
 }
 
+// Ticks simulés : prix, couleur (bleu = monte, rouge = baisse), heure, Low/High
+function splitPrice(v, digits) { const s = v.toFixed(digits); return [s.slice(0, -1), s.slice(-1)]; }
+function tickQuote(q) {
+  const digits = q.bid.split('.')[1].length + 1, pt = Math.pow(10, -digits);
+  let bid = parseFloat(q.bid + q.bS);
+  const step = (1 + Math.floor(Math.random() * 4)) * pt * (Math.random() < 0.5 ? -1 : 1);
+  q.dir = step > 0 ? 'up' : 'dn';
+  bid += step;
+  const ask = bid + q.spread * pt;
+  [q.bid, q.bS] = splitPrice(bid, digits);
+  [q.ask, q.aS] = splitPrice(ask, digits);
+  const lo = parseFloat(q.low), hi = parseFloat(q.high), dec = q.low.split('.')[1].length;
+  if (bid < lo) q.low = bid.toFixed(dec);
+  if (bid > hi) q.high = bid.toFixed(dec);
+  q.time = new Date().toTimeString().slice(0, 8);
+  const row = $('#view-quotes .qrow[data-sym="' + q.sym + '"]');
+  if (!row) return;
+  const p = row.querySelector('.prices');
+  p.className = 'prices ' + q.dir;
+  p.children[0].innerHTML = price(q.bid, q.bS);
+  p.children[1].innerHTML = price(q.ask, q.aS);
+  const b = row.querySelector('.bot').children;
+  b[0].textContent = q.time;
+  b[2].innerHTML = 'Low: ' + q.low + '&nbsp;&nbsp;High: ' + q.high;
+}
+quotes.forEach(q => (function loop() {
+  tickQuote(q);
+  setTimeout(loop, 400 + Math.random() * 1800);
+})());
+
 // ================= TRADE =================
 function tradeTotal() { return tradeData.positions.reduce((sum, p) => sum + p.pnl, 0); }
 function renderTrade() {
