@@ -756,10 +756,11 @@
 <script>
 // ================= DATA =================
 const quotes = [
+  { sym:"XAUUSD", time:"23:56:59", spread:30, low:"4340.00", high:"4400.00", bid:"4378.1", bS:"1", ask:"4378.4", aS:"1", sel:true, dir:"up", vol:8 },
   { sym:"USDCHF", time:"23:56:58", spread:18, low:"0.82161", high:"0.82600", bid:"0.8220", bS:"0", ask:"0.8221", aS:"8", dir:"up" },
   { sym:"USDJPY", time:"23:56:51", spread:20, low:"155.875", high:"158.055", bid:"156.86", bS:"9", ask:"156.88", aS:"9", dir:"up" },
   { sym:"AUDUSD", time:"23:56:59", spread:20, low:"0.70985", high:"0.71363", bid:"0.7124", bS:"6", ask:"0.7126", aS:"6", dir:"dn" },
-  { sym:"EURUSD", time:"23:56:59", spread:10, low:"1.14549", high:"1.14918", bid:"1.1485", bS:"4", ask:"1.1486", aS:"4", sel:true, dir:"up" },
+  { sym:"EURUSD", time:"23:56:59", spread:10, low:"1.14549", high:"1.14918", bid:"1.1485", bS:"4", ask:"1.1486", aS:"4", dir:"up" },
   { sym:"GBPUSD", time:"23:56:50", spread:23, low:"1.33355", high:"1.33983", bid:"1.3392", bS:"9", ask:"1.3395", aS:"2", dir:"dn" },
   { sym:"USDCAD", time:"23:56:55", spread:25, low:"1.39762", high:"1.40145", bid:"1.3983", bS:"3", ask:"1.3985", aS:"8", dir:"up" },
   { sym:"AUDCAD", time:"23:56:59", spread:46, low:"0.99417", high:"0.99833", bid:"0.9962", bS:"0", ask:"0.9966", aS:"6", dir:"dn" },
@@ -863,15 +864,15 @@ function tickQuote(q) {
   b[0].textContent = q.time;
   b[2].innerHTML = 'Low: ' + q.low + '&nbsp;&nbsp;High: ' + q.high;
 }
-// XAUUSD n'est pas dans Cotations mais alimente la position Trade
-const goldQuote = { sym:"XAUUSD", time:"", spread:30, low:"4340.00", high:"4400.00", bid:"4378.1", bS:"1", ask:"4378.4", aS:"1", dir:"up", vol:8 };
+// XAUUSD est dans Cotations et alimente les positions Trade
+const goldQuote = quotes.find(x => x.sym === "XAUUSD");
 
 // Marché fermé : du vendredi 22:00 UTC au dimanche 22:00 UTC, prix et heure figés
 function marketOpen() {
   const d = new Date(), day = d.getUTCDay(), h = d.getUTCHours();
   return !(day === 6 || (day === 5 && h >= 22) || (day === 0 && h < 22));
 }
-quotes.concat(goldQuote).forEach(q => (function loop() {
+quotes.forEach(q => (function loop() {
   setTimeout(() => {
     if (marketOpen()) tickQuote(q);
     loop();

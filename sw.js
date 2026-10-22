@@ -1,4 +1,4 @@
-const CACHE = 'mt4-webapp-v1';
+const CACHE = 'mt4-webapp-v2';
 const CORE_ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', event => {
