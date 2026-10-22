@@ -772,11 +772,16 @@ const tradeData = {
   moyens: "2 376 762.37",
   margelibre: "2 376 745.41",
   niveau: "14 013 929.07",
-  marge: "16.96",
+  marge: "21 198.55",
   levier: "1:500",
   positions: [
-    { sym:"XAUUSD", side:"buy 0.01", cls:"blue", range:"4 354.83 → 4 378.11", pnl:23.28, open:4354.83, size:1, digits:2, buy:true },
-    { sym:"EURUSD", side:"sell 0.11", cls:"red", range:"1.14631 → 1.14864", pnl:-25.63, open:1.14631, size:11000, digits:5, buy:false },
+    { sym:"XAUUSD", side:"buy 0.01", cls:"blue", range:"", pnl:0, open:4354.83, size:1, digits:2, buy:true },
+    { sym:"XAUUSD", side:"buy 2.00", cls:"blue", range:"", pnl:0, open:4318.40, size:200, digits:2, buy:true },
+    { sym:"XAUUSD", side:"buy 3.50", cls:"blue", range:"", pnl:0, open:4331.25, size:350, digits:2, buy:true },
+    { sym:"XAUUSD", side:"buy 5.00", cls:"blue", range:"", pnl:0, open:4339.90, size:500, digits:2, buy:true },
+    { sym:"XAUUSD", side:"buy 1.50", cls:"blue", range:"", pnl:0, open:4296.15, size:150, digits:2, buy:true },
+    { sym:"XAUUSD", side:"buy 8.00", cls:"blue", range:"", pnl:0, open:4350.20, size:800, digits:2, buy:true },
+    { sym:"XAUUSD", side:"buy 4.20", cls:"blue", range:"", pnl:0, open:4322.80, size:420, digits:2, buy:true },
   ],
   orders: [
     { sym:"SOLUSD", side:"sell stop", detail:"16.00 at 74.2682", price:"110.4420" },
@@ -874,7 +879,7 @@ quotes.concat(goldQuote).forEach(q => (function loop() {
 })());
 
 // ---- Trade : P&L, équité et marge en direct ----
-const BASE_BALANCE = 2376766, EQUITY_OFFSET = -1.28;
+const BASE_BALANCE = 2376766, EQUITY_OFFSET = -1.28, MARGIN = 21198.55;
 function fmtNum(v, d) {
   const [i, f] = Math.abs(v).toFixed(d).split('.');
   return (v < 0 ? '-' : '') + i.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (f ? '.' + f : '');
@@ -900,7 +905,7 @@ function updateTrade() {
     el.className = 'pnl ' + (p.pnl >= 0 ? 'up' : 'dn') + ' eb';
     if (state['t_p' + (i + 1)] === undefined) el.textContent = p.pnl.toFixed(2);
   });
-  const margin = parseFloat(tradeData.marge);
+  const margin = MARGIN;
   const equity = BASE_BALANCE + tradeTotal() + EQUITY_OFFSET;
   tradeData.moyens = fmtNum(equity, 2);
   tradeData.margelibre = fmtNum(equity - margin, 2);
@@ -982,7 +987,7 @@ function drawChart() {
 window.addEventListener('resize', () => { if (currentView === 'chart') drawChart(); });
 
 function onTick(q, bid, ask) {
-  if (q.sym === 'XAUUSD' || q.sym === 'EURUSD') updateTrade();
+  if (q.sym === 'XAUUSD') updateTrade();
   if (currentView === 'chart' && q.sel) drawChart();
   else if (charts[q.sym]) feedChart(q, bid);
 }
@@ -1177,7 +1182,7 @@ $('#ctMenu').onclick = () => $('#drawer').classList.add('show');
 $$('.chart-toolbar [data-act]').forEach(el => el.onclick = () => toast(el.dataset.act));
 
 // ================= INIT =================
-renderQuotes(); renderTrade(); renderAccounts(); applyBalances();
+updateTrade(); renderQuotes(); renderTrade(); renderAccounts(); applyBalances();
 if (!localStorage.getItem('mt4_hint')) { setTimeout(()=>toast('💡 Touchez n\'importe quel montant pour le modifier'), 1200); localStorage.setItem('mt4_hint','1'); }
 const start = (location.hash || '#quotes').slice(1);
 switchTab(['quotes','chart','trade','history','news','messages','accounts'].includes(start) ? start : 'quotes');
